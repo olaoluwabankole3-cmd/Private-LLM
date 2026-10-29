@@ -1,7 +1,7 @@
 """SoloLM v0.2: a small GPT-style Transformer with byte-level BPE tokenization.
 
 Free Colab setup:
-  !pip -q install tokenizers
+  !pip -q install tokenizers datasets
   !wget -q https://raw.githubusercontent.com/olaoluwabankole3-cmd/Private-LLM/main/sololm_v0_2.py
   !python sololm_v0_2.py --max-steps 3000
 
@@ -13,13 +13,13 @@ import argparse
 import math
 import os
 import urllib.request
-import zipfile
 from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import AdamW
+from datasets import load_dataset
 from tokenizers import ByteLevelBPETokenizer
 from tokenizers.processors import ByteLevel
 
@@ -47,42 +47,40 @@ def parse_args():
 
 
 def download_dataset(root: Path):
-    """Download the official WikiText-2 raw train/validation/test text files.
+    """Load WikiText-2 from Hugging Face's dataset repository and cache text locally.
 
-    The original S3 archive currently redirects with HTTP 301 in some runtimes,
-    so use a public mirror serving the same named raw split files directly.
+    This avoids relying on third-party mirrors that may time out or redirect.
+    Install the 'datasets' package before running this script.
     """
     extracted = root / "wikitext-2-raw"
     extracted.mkdir(parents=True, exist_ok=True)
-    paths = {
-        "wiki.train.raw": extracted / "wiki.train.raw",
-        "wiki.valid.raw": extracted / "wiki.valid.raw",
-        "wiki.test.raw": extracted / "wiki.test.raw",
-    }
-    for filename, path in paths.items():
-        if path.exists() and path.stat().st_size > 0:
-            continue
-        url = f"{DATA_BASE_URL}/{filename}"
-        print(f"Downloading {filename}...")
-        request = urllib.request.Request(
-            url, headers={"User-Agent": "SoloLM-educational-project/0.2"}
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=60) as response, path.open("wb") as out:
-                while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    out.write(chunk)
-        except Exception as exc:
+    train_path = extracted / "wiki.train.raw"
+    valid_path = extracted / "wiki.valid.raw"
+
+    if (train_path.exists() and train_path.stat().st_size > 0
+            and valid_path.exists() and valid_path.stat().st_size > 0):
+        print("Using cached WikiText-2 files.")
+        return train_path, valid_path
+
+    print("Downloading WikiText-2 through Hugging Face Datasets...")
+    try:
+        dataset = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1")
+        for split_name, output_path in (("train", train_path), ("validation", valid_path)):
+            with output_path.open("w", encoding="utf-8") as out:
+                for row in dataset[split_name]:
+                    out.write(row["text"])
+                    out.write("\\n")
+    except Exception as exc:
+        for path in (train_path, valid_path):
             if path.exists():
                 path.unlink()
-            raise RuntimeError(
-                f"Could not download {filename} from {url}. "
-                "Please rerun the cell; if it persists, report the full error."
-            ) from exc
-    return paths["wiki.train.raw"], paths["wiki.valid.raw"]
+        raise RuntimeError(
+            "Could not load WikiText-2 from Hugging Face. In Colab, run "
+            "'!pip -q install -U datasets tokenizers', then rerun the script. "
+            "If it still fails, send the complete new error."
+        ) from exc
 
+    return train_path, valid_path
 
 def load_or_train_tokenizer(train_path: Path, output_dir: Path, vocab_size: int):
     vocab_path = output_dir / "tokenizer-vocab.json"
