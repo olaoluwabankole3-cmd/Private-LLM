@@ -21,7 +21,8 @@ This is an early research prototype. It can generate Shakespeare-like text, but 
 - `sololm_v0_1.py` — training script with resumable checkpoints, optimizer state, training step, RNG state, and validation-loss tracking.
 - `sololm_v0_1_best.pt` — best saved v0.1 checkpoint by observed validation loss.
 - `sololm_v0_1_last.pt` — latest v0.1 checkpoint, including optimizer state for resuming training.
-- `sololm_generate.py` — standalone text-generation script that loads a saved checkpoint.
+- `sololm_generate.py` — standalone text-generation script that loads a v0.1 checkpoint.
+- `sololm_v0_2.py` — separate BPE-tokenized Transformer training experiment using WikiText-2.
 - `README.md` — project overview and development notes.
 
 ## Run SoloLM v0
@@ -118,4 +119,4 @@ Here, `--max-steps 5000` means a total target of 5,000 steps, not 5,000 addition
 ## Status
 
 **SoloLM v0:** initial training experiment completed and checkpoint preserved.  
-**SoloLM v0.1:** 500-step continuation completed on a CUDA runtime. The observed validation loss improved from approximately 2.2003 at the initial evaluation to 2.1591 at step 400. Text generation runs, but output is still mostly incoherent, as expected for this early character-level prototype. Standalone generation and resume training should be tested again from the committed files.
+**SoloLM v0.1:** continuation reached step 1,500 on CUDA. The best recorded checkpoint was at step 1,300 with validation loss approximately 2.0493. Generation runs, but output remains mostly incoherent. **SoloLM v0.2:** training script and instructions added; the first Colab run is the next validation step.
