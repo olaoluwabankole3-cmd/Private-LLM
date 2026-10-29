@@ -159,6 +159,18 @@ class SoloLMv02(nn.Module):
         self.final_norm = nn.LayerNorm(config["d_model"])
         self.lm_head = nn.Linear(config["d_model"], config["vocab_size"], bias=False)
         self.lm_head.weight = self.token_embedding.weight
+        # GPT-style small initialization prevents enormous initial logits/loss.
+        self.apply(self._init_weights)
+
+    @staticmethod
+    def _init_weights(module):
+        if isinstance(module, (nn.Linear, nn.Embedding)):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if isinstance(module, nn.Linear) and module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.LayerNorm):
+            nn.init.ones_(module.weight)
+            nn.init.zeros_(module.bias)
 
     def forward(self, idx, targets=None):
         _, length = idx.shape
