@@ -24,7 +24,7 @@ from tokenizers import ByteLevelBPETokenizer
 from tokenizers.processors import ByteLevel
 
 
-DATA_URL = "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip"
+DATA_BASE_URL = "https://cosmo.zip/pub/datasets/wikitext-2-raw"
 SPECIAL_TOKEN = "<|endoftext|>"
 
 
@@ -47,26 +47,41 @@ def parse_args():
 
 
 def download_dataset(root: Path):
-    root.mkdir(parents=True, exist_ok=True)
-    zip_path = root / "wikitext-2-raw-v1.zip"
+    """Download the official WikiText-2 raw train/validation/test text files.
+
+    The original S3 archive currently redirects with HTTP 301 in some runtimes,
+    so use a public mirror serving the same named raw split files directly.
+    """
     extracted = root / "wikitext-2-raw"
-    train_path = extracted / "wiki.train.raw"
-    valid_path = extracted / "wiki.valid.raw"
-    if train_path.exists() and valid_path.exists():
-        return train_path, valid_path
-    print("Downloading WikiText-2 raw dataset...")
-    urllib.request.urlretrieve(DATA_URL, zip_path)
-    with zipfile.ZipFile(zip_path) as archive:
-        archive.extractall(root)
-    unpacked = root / "wikitext-2-raw-v1"
-    if unpacked.exists():
-        if extracted.exists():
-            import shutil
-            shutil.rmtree(extracted)
-        unpacked.rename(extracted)
-    if not train_path.exists() or not valid_path.exists():
-        raise RuntimeError("Dataset download completed but expected WikiText-2 files were not found.")
-    return train_path, valid_path
+    extracted.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "wiki.train.raw": extracted / "wiki.train.raw",
+        "wiki.valid.raw": extracted / "wiki.valid.raw",
+        "wiki.test.raw": extracted / "wiki.test.raw",
+    }
+    for filename, path in paths.items():
+        if path.exists() and path.stat().st_size > 0:
+            continue
+        url = f"{DATA_BASE_URL}/{filename}"
+        print(f"Downloading {filename}...")
+        request = urllib.request.Request(
+            url, headers={"User-Agent": "SoloLM-educational-project/0.2"}
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response, path.open("wb") as out:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    out.write(chunk)
+        except Exception as exc:
+            if path.exists():
+                path.unlink()
+            raise RuntimeError(
+                f"Could not download {filename} from {url}. "
+                "Please rerun the cell; if it persists, report the full error."
+            ) from exc
+    return paths["wiki.train.raw"], paths["wiki.valid.raw"]
 
 
 def load_or_train_tokenizer(train_path: Path, output_dir: Path, vocab_size: int):
