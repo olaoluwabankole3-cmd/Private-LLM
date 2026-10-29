@@ -63,6 +63,44 @@ In a fresh Google Colab notebook, select a GPU runtime if available and download
 
 You can change the prompt and generation length. The model is character-level, so prompt characters must exist in its training vocabulary. Generation does not train or modify the checkpoint.
 
+## SoloLM v0.2: subword-tokenized model
+
+v0.2 is a separate experiment. It does **not** overwrite the v0/v0.1 code or checkpoints.
+
+- **Architecture:** small decoder-only Transformer with causal self-attention.
+- **Tokenizer:** byte-level Byte Pair Encoding (BPE), which represents text using reusable byte/subword pieces rather than one token per character.
+- **Dataset:** WikiText-2 raw, with the official train and validation splits kept separate.
+- **Training:** PyTorch; free Google Colab GPU recommended.
+- **Artifacts:** tokenizer files and resumable best/last checkpoints are written under `sololm_v0_2_artifacts/`.
+
+### Run v0.2 in Google Colab
+
+Open a new Colab notebook, choose a GPU runtime if available, then run these cells in order:
+
+```bash
+!pip -q install tokenizers
+!wget -q -O sololm_v0_2.py https://raw.githubusercontent.com/olaoluwabankole3-cmd/Private-LLM/main/sololm_v0_2.py
+!python sololm_v0_2.py --max-steps 3000 --eval-interval 200 --eval-batches 10
+```
+
+The first run downloads WikiText-2 and trains the BPE tokenizer. This can take a little while. Training then reports train and validation loss and writes:
+- `sololm_v0_2_artifacts/sololm_v0_2_best.pt`
+- `sololm_v0_2_artifacts/sololm_v0_2_last.pt`
+- `sololm_v0_2_artifacts/tokenizer-vocab.json`
+- `sololm_v0_2_artifacts/tokenizer-merges.txt`
+
+Download the entire `sololm_v0_2_artifacts` folder before the Colab runtime ends. Colab's local files are temporary. Keep the v0.2 tokenizer files alongside its checkpoint; the checkpoint's token IDs only make sense with the tokenizer trained for that run.
+
+To continue training in the same runtime, use the last checkpoint and the same model settings:
+
+```bash
+!python sololm_v0_2.py --resume sololm_v0_2_artifacts/sololm_v0_2_last.pt --max-steps 5000
+```
+
+Here, `--max-steps 5000` means a total target of 5,000 steps, not 5,000 additional steps. For a fresh runtime, upload/restore the artifact folder first and keep the tokenizer files in the same output directory. Do not change architecture settings when resuming a checkpoint.
+
+**Important:** validation loss is only comparable within the same dataset/tokenizer setup. It cannot be directly compared numerically with v0.1's character-level loss. v0.2 is still a small research model and is not a general-purpose assistant.
+
 ## Development roadmap
 
 1. Test standalone generation from the committed checkpoint.
