@@ -84,7 +84,7 @@ Open a new Colab notebook, choose a GPU runtime if available, then run these cel
 !python sololm_v0_2.py --max-steps 3000 --eval-interval 200 --eval-batches 10
 ```
 
-The first run downloads WikiText-2 and trains the BPE tokenizer. This can take a little while. Training then reports train and validation loss and writes:
+The first run downloads the official WikiText-2 raw train/validation/test text files from a public mirror, then trains the BPE tokenizer. The previous S3 archive URL can return an HTTP 301 redirect in some runtimes; the current script avoids that archive URL. This can take a little while. Training then reports train and validation loss and writes:
 - `sololm_v0_2_artifacts/sololm_v0_2_best.pt`
 - `sololm_v0_2_artifacts/sololm_v0_2_last.pt`
 - `sololm_v0_2_artifacts/tokenizer-vocab.json`
