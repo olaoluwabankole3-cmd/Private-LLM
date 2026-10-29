@@ -232,7 +232,7 @@ def main():
         if checkpoint.get("torch_rng_state") is not None:
             torch.set_rng_state(checkpoint["torch_rng_state"].cpu())
         if torch.cuda.is_available() and checkpoint.get("cuda_rng_state_all") is not None:
-            torch.cuda.set_rng_state_all(checkpoint["cuda_rng_state_all"])
+            torch.cuda.set_rng_state_all([state.cpu() for state in checkpoint["cuda_rng_state_all"]])
         stoi, itos = checkpoint["stoi"], checkpoint["itos"]
         print(f"Resumed at step {start_step} from {args.resume}")
     elif args.init_checkpoint:
