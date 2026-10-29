@@ -23,6 +23,7 @@ This is an early research prototype. It can generate Shakespeare-like text, but 
 - `sololm_v0_1_last.pt` — latest v0.1 checkpoint, including optimizer state for resuming training.
 - `sololm_generate.py` — standalone text-generation script that loads a v0.1 checkpoint.
 - `sololm_v0_2.py` — separate BPE-tokenized Transformer training experiment using WikiText-2.
+- `sololm_v0_2_generate.py` — standalone generation script for trained v0.2 checkpoints.
 - `README.md` — project overview and development notes.
 
 ## Run SoloLM v0
@@ -92,6 +93,18 @@ The first run loads WikiText-2 raw from the Hugging Face Datasets repository and
 
 Download the entire `sololm_v0_2_artifacts` folder before the Colab runtime ends. Colab's local files are temporary. Keep the v0.2 tokenizer files alongside its checkpoint; the checkpoint's token IDs only make sense with the tokenizer trained for that run.
 
+### Generate text with a trained v0.2 checkpoint
+
+After downloading or restoring the artifact folder, get both scripts and generate text without training:
+
+```bash
+!wget -q -O sololm_v0_2.py https://raw.githubusercontent.com/olaoluwabankole3-cmd/Private-LLM/main/sololm_v0_2.py
+!wget -q -O sololm_v0_2_generate.py https://raw.githubusercontent.com/olaoluwabankole3-cmd/Private-LLM/main/sololm_v0_2_generate.py
+!python sololm_v0_2_generate.py --checkpoint sololm_v0_2_artifacts/sololm_v0_2_best.pt --prompt "The future of science is" --max-new-tokens 160
+```
+
+The script defaults to the best checkpoint and uses the tokenizer files in `sololm_v0_2_artifacts/`. Change `--prompt`, `--max-new-tokens`, `--temperature`, or `--top-k` to experiment with generation. Use `--top-k 0` to disable top-k filtering. This script loads the model for inference only; it does not train or modify the checkpoint.
+
 To continue training in the same runtime, use the last checkpoint and the same model settings:
 
 ```bash
@@ -104,8 +117,8 @@ Here, `--max-steps 5000` means a total target of 5,000 steps, not 5,000 addition
 
 ## Development roadmap
 
-1. Test standalone generation from the committed checkpoint.
-2. Verify resume training from `sololm_v0_1_last.pt` and record comparable validation results.
+1. Test standalone v0.2 generation using the saved best checkpoint and matching tokenizer.
+2. Evaluate prompt quality and generation settings on a small, repeatable test set.
 3. Improve data handling and document dataset provenance and licensing.
 4. Compare training settings using recorded validation results before scaling model size or data.
 
@@ -119,4 +132,4 @@ Here, `--max-steps 5000` means a total target of 5,000 steps, not 5,000 addition
 ## Status
 
 **SoloLM v0:** initial training experiment completed and checkpoint preserved.  
-**SoloLM v0.1:** continuation reached step 1,500 on CUDA. The best recorded checkpoint was at step 1,300 with validation loss approximately 2.0493. Generation runs, but output remains mostly incoherent. **SoloLM v0.2:** training script and instructions added; the first Colab run is the next validation step.
+**SoloLM v0.1:** continuation reached step 1,500 on CUDA. The best recorded checkpoint was at step 1,300 with validation loss approximately 2.0493. Generation runs, but output remains mostly incoherent. **SoloLM v0.2:** completed 5,000 training steps in Colab. Best observed validation loss was 4.5879 at the step-4,400 evaluation. Generated text has learned article-like patterns but remains inconsistent and may invent details. Standalone generation script added; next step is to test it against the saved best checkpoint and matching tokenizer.
