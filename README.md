@@ -79,12 +79,12 @@ v0.2 is a separate experiment. It does **not** overwrite the v0/v0.1 code or che
 Open a new Colab notebook, choose a GPU runtime if available, then run these cells in order:
 
 ```bash
-!pip -q install tokenizers
+!pip -q install tokenizers datasets
 !wget -q -O sololm_v0_2.py https://raw.githubusercontent.com/olaoluwabankole3-cmd/Private-LLM/main/sololm_v0_2.py
 !python sololm_v0_2.py --max-steps 3000 --eval-interval 200 --eval-batches 10
 ```
 
-The first run downloads the official WikiText-2 raw train/validation/test text files from a public mirror, then trains the BPE tokenizer. The previous S3 archive URL can return an HTTP 301 redirect in some runtimes; the current script avoids that archive URL. This can take a little while. Training then reports train and validation loss and writes:
+The first run loads WikiText-2 raw from the Hugging Face Datasets repository and caches the train/validation text locally, then trains the BPE tokenizer. This avoids the old S3 archive URL and an unreliable third-party mirror. The first download and tokenizer training can take a little while. Training then reports train and validation loss and writes:
 - `sololm_v0_2_artifacts/sololm_v0_2_best.pt`
 - `sololm_v0_2_artifacts/sololm_v0_2_last.pt`
 - `sololm_v0_2_artifacts/tokenizer-vocab.json`
