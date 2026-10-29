@@ -69,7 +69,7 @@ def download_dataset(root: Path):
             with output_path.open("w", encoding="utf-8") as out:
                 for row in dataset[split_name]:
                     out.write(row["text"])
-                    out.write("\\n")
+                    out.write("\n")
     except Exception as exc:
         for path in (train_path, valid_path):
             if path.exists():
