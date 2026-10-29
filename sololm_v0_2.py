@@ -88,7 +88,8 @@ def load_or_train_tokenizer(train_path: Path, output_dir: Path, vocab_size: int)
     )
     tokenizer._tokenizer.post_processor = ByteLevel(trim_offsets=False)
     tokenizer.save_model(str(output_dir), "tokenizer")
-    # save_model creates tokenizer-vocab.json and tokenizer-merges.txt with this prefix.\n    return tokenizer
+    # save_model creates tokenizer-vocab.json and tokenizer-merges.txt with this prefix.
+    return tokenizer
 
 
 class CausalSelfAttention(nn.Module):
